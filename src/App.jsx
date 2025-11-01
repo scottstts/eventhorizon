@@ -5,6 +5,7 @@ import { createBlackHole } from './blackhole/createBlackHole.js'
 import { createPlanetSurface } from './blackhole/createPlanetSurface.js'
 import './App.css'
 import { createAccretionFlare } from './blackhole/createAccretionFlare.js'
+import bgMusicUrl from './assets/bg_music.mp3'
 
 const WORLD_UP = new THREE.Vector3(0, 1, 0)
 
@@ -19,6 +20,9 @@ function App() {
     let renderer
 
     const cleanupStack = []
+
+    let backgroundMusic
+    let musicStarted = false
 
     const moveState = {
       forward: false,
@@ -71,6 +75,11 @@ function App() {
 
       await renderer.init()
       if (disposed) return
+
+      backgroundMusic = new Audio(bgMusicUrl)
+      backgroundMusic.loop = true
+      backgroundMusic.volume = 0.35
+      backgroundMusic.preload = 'auto'
 
       const scene = new THREE.Scene()
       const camera = new THREE.PerspectiveCamera(
@@ -264,7 +273,24 @@ function App() {
         }
       }
 
+      const startBackgroundMusic = () => {
+        if (!backgroundMusic || musicStarted) return
+        const playPromise = backgroundMusic.play()
+        if (playPromise?.then) {
+          playPromise
+            .then(() => {
+              musicStarted = true
+            })
+            .catch(() => {
+              /* ignore autoplay rejections; will retry on next click */
+            })
+        } else {
+          musicStarted = true
+        }
+      }
+
       const handleCanvasClick = () => {
+        startBackgroundMusic()
         renderer.domElement.requestPointerLock()
       }
 
@@ -280,6 +306,9 @@ function App() {
         document.removeEventListener('pointerlockchange', handlePointerLockChange)
         document.removeEventListener('mousemove', handlePointerMove)
         renderer?.domElement?.removeEventListener('click', handleCanvasClick)
+        backgroundMusic?.pause?.()
+        backgroundMusic = null
+        musicStarted = false
       })
 
       const moveSpeed = playerHeight * 2
