@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three/webgpu'
 import { loadBlackHoleResources } from './blackhole/loadResources.js'
 import { createBlackHole } from './blackhole/createBlackHole.js'
+import { createPlanetSurface } from './blackhole/createPlanetSurface.js'
 import './App.css'
 
 const WORLD_UP = new THREE.Vector3(0, 1, 0)
@@ -71,7 +72,7 @@ function App() {
       const camera = new THREE.PerspectiveCamera(
         70,
         Math.max(container.clientWidth, 1) / Math.max(container.clientHeight, 1),
-        0.1,
+        0.005,
         5000
       )
 
@@ -100,18 +101,17 @@ function App() {
       scene.add(planetGroup)
 
       const planetRadius = 2
-      const playerHeight = 0.01
+      const playerHeight = 0.2
       const cameraDistance = planetRadius + playerHeight
 
-      const planetGeometry = new THREE.SphereGeometry(planetRadius, 128, 128)
-      const planetMaterial = new THREE.MeshStandardMaterial({
-        color: 0x1b1f2d,
-        roughness: 0.95,
-        metalness: 0.05,
+      const {
+        mesh: planetMesh,
+        geometry: planetGeometry,
+        material: planetMaterial,
+      } = createPlanetSurface({
+        radius: planetRadius,
+        segments: 160,
       })
-      const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial)
-      planetMesh.castShadow = false
-      planetMesh.receiveShadow = false
       planetGroup.add(planetMesh)
 
       const orbitRadius = 50
@@ -246,7 +246,7 @@ function App() {
         renderer?.domElement?.removeEventListener('click', handleCanvasClick)
       })
 
-      const moveSpeed = playerHeight * 7
+      const moveSpeed = playerHeight * 0.5
 
       const updateCamera = (delta) => {
         const up = upVec.copy(playerOffset).normalize()
