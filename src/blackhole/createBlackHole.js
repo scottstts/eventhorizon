@@ -52,14 +52,15 @@ export function createBlackHole({ noiseTexture, starsTexture, scale = 5 }) {
     originRadius: uniform(float(0.13)),
     width: uniform(float(0.03)),
     uvMotion: uniform(float(0)),
-    rampCol1: uniform(color(0.95, 0.71, 0.44)),
-    rampPos1: uniform(float(0.05)),
-    rampCol2: uniform(color(0.14, 0.05, 0.03)),
-    rampPos2: uniform(float(0.425)),
-    rampCol3: uniform(color(0, 0, 0)),
+    // Hot accretion disk palette: blue-white core -> electric blue mid-band -> deep blue outer falloff
+    rampCol1: uniform(color(0.88, 0.97, 1.0)),
+    rampPos1: uniform(float(0.06)),
+    rampCol2: uniform(color(0.16, 0.37, 0.82)),
+    rampPos2: uniform(float(0.33)),
+    rampCol3: uniform(color(0.02, 0.08, 0.28)),
     rampPos3: uniform(float(1)),
-    rampEmission: uniform(float(2)),
-    emissionColor: uniform(color(0.14, 0.129, 0.09)),
+    rampEmission: uniform(float(1.95)),
+    emissionColor: uniform(color(0.16, 0.32, 0.64)),
   }
 
   material.colorNode = Fn(() => {
@@ -128,7 +129,8 @@ export function createBlackHole({ noiseTexture, starsTexture, scale = 5 }) {
       const rampC = vec4(uniforms.rampCol3, uniforms.rampPos3)
 
       const baseCol = ColorRamp3_BSpline(rampInput.x, rampA, rampB, rampC)
-      const emissiveCol = baseCol.mul(uniforms.rampEmission)
+      const detailBoost = remapClamp(noiseNormalLen, 0.35, 1.2, 0.75, 1.15)
+      const emissiveCol = baseCol.mul(uniforms.rampEmission.mul(detailBoost))
         .add(uniforms.emissionColor)
 
       const rLenNow = lengthSqrt(rayPos)
