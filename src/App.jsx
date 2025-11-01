@@ -41,6 +41,7 @@ function App() {
     const cameraQuat = new THREE.Quaternion()
     const inverseBase = new THREE.Quaternion()
     const toBlackHole = new THREE.Vector3()
+    let initialLookAligned = false
 
     const setup = async () => {
       const canvas = document.createElement('canvas')
@@ -85,7 +86,7 @@ function App() {
       const { group: blackHoleGroup, material: blackHoleMaterial } = createBlackHole({
         noiseTexture,
         starsTexture,
-        scale: 12,
+        scale: 28,
       })
       scene.add(blackHoleGroup)
 
@@ -98,7 +99,7 @@ function App() {
       const planetGroup = new THREE.Group()
       scene.add(planetGroup)
 
-      const planetRadius = 30
+      const planetRadius = 20
       const playerHeight = 2
       const cameraDistance = planetRadius + playerHeight
 
@@ -113,12 +114,12 @@ function App() {
       planetMesh.receiveShadow = false
       planetGroup.add(planetMesh)
 
-      const orbitRadius = 160
-      const orbitSpeed = 0.02
-      let orbitAngle = Math.PI * 0.15
+      const orbitRadius = 70
+      const orbitSpeed = 0.0006
+      let orbitAngle = Math.PI * 0.4
       planetGroup.position.set(
         Math.cos(orbitAngle) * orbitRadius,
-        orbitRadius * 0.08,
+        orbitRadius * 0.05,
         Math.sin(orbitAngle) * orbitRadius
       )
 
@@ -239,6 +240,11 @@ function App() {
 
         const worldPos = tempVec.copy(playerOffset).add(planetGroup.position)
         camera.position.copy(worldPos)
+        if (!initialLookAligned) {
+          camera.lookAt(blackHoleGroup.position)
+          camera.updateMatrixWorld()
+          initialLookAligned = true
+        }
       }
 
       const onResize = () => {
@@ -270,10 +276,10 @@ function App() {
       renderer.setAnimationLoop(async () => {
         const delta = clock.getDelta()
 
-        orbitAngle += orbitSpeed * delta * 60
+        orbitAngle += orbitSpeed * delta
         planetGroup.position.set(
           Math.cos(orbitAngle) * orbitRadius,
-          orbitRadius * 0.08,
+          orbitRadius * 0.05,
           Math.sin(orbitAngle) * orbitRadius
         )
         planetMesh.rotation.y += delta * 0.05

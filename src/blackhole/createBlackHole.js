@@ -78,14 +78,14 @@ export function createBlackHole({ noiseTexture, starsTexture, scale = 5 }) {
 
     const viewInWorld = normalize(sub(cameraPosition, positionWorld))
       .mul(vec3(1, 1, -1)).xzy
-    const rayDir = viewInWorld.negate()
+    const rayDir = viewInWorld.negate().toVar()
 
     const noiseWhite = whiteNoise2D(objCoords.xy).mul(noiseAmp)
     const jitter = rayDir.mul(noiseWhite)
-    const rayPos = startCoords.sub(jitter)
+    const rayPos = startCoords.sub(jitter).toVar()
 
-    const colorAcc = vec3(0)
-    const alphaAcc = float(0)
+    const colorAcc = vec3(0).toVar()
+    const alphaAcc = float(0).toVar()
 
     Loop(iterCount, () => {
       const rNorm = normalize(rayPos)
@@ -165,9 +165,11 @@ export function createBlackHole({ noiseTexture, starsTexture, scale = 5 }) {
   })()
 
   material.emissiveNode = material.colorNode
+  material.needsUpdate = true
 
   const mesh = new THREE.Mesh(geometry, material)
   mesh.scale.setScalar(scale)
+  mesh.frustumCulled = false
   group.add(mesh)
 
   return {
