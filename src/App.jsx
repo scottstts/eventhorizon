@@ -32,6 +32,7 @@ function App() {
     const pitchLimit = Math.PI / 2 - 0.05
 
     const playerOffset = new THREE.Vector3()
+    const playerOffsetLocal = new THREE.Vector3()
     const tempVec = new THREE.Vector3()
     const tempVec2 = new THREE.Vector3()
     const upVec = new THREE.Vector3()
@@ -42,6 +43,8 @@ function App() {
     const cameraQuat = new THREE.Quaternion()
     const inverseBase = new THREE.Quaternion()
     const toBlackHole = new THREE.Vector3()
+    const planetSpinAxis = new THREE.Vector3(0, 1, 0)
+    let planetSpinAngle = 0
     let initialLookAligned = false
 
     const setup = async () => {
@@ -175,6 +178,7 @@ function App() {
         pitch = Math.max(-pitchLimit, Math.min(pitchLimit, pitch))
       }
       setInitialOrientation()
+      playerOffsetLocal.copy(playerOffset)
 
       const handleKeyDown = (event) => {
         switch (event.code) {
@@ -248,7 +252,7 @@ function App() {
         renderer?.domElement?.removeEventListener('click', handleCanvasClick)
       })
 
-      const moveSpeed = playerHeight * 0.5
+      const moveSpeed = playerHeight * 2
 
       const updateCamera = (delta) => {
         const up = upVec.copy(playerOffset).normalize()
@@ -321,14 +325,19 @@ function App() {
           orbitRadius * 0.05,
           Math.sin(orbitAngle) * orbitRadius
         )
-        const spinDelta = delta * planetSpinSpeed
-        if (spinDelta !== 0) {
-          tempQuat.setFromAxisAngle(WORLD_UP, spinDelta)
-          playerOffset.applyQuaternion(tempQuat)
-          planetMesh.rotation.y += spinDelta
-        }
+
+        planetSpinAngle += planetSpinSpeed * delta
+        planetMesh.rotation.y = planetSpinAngle
+
+        playerOffset.copy(playerOffsetLocal).applyAxisAngle(planetSpinAxis, planetSpinAngle)
 
         updateCamera(delta)
+
+        playerOffsetLocal
+          .copy(playerOffset)
+          .applyAxisAngle(planetSpinAxis, -planetSpinAngle)
+          .normalize()
+          .multiplyScalar(cameraDistance)
 
         await renderer.renderAsync(scene, camera)
       })
