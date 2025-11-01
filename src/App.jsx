@@ -94,9 +94,9 @@ function App() {
       })
       scene.add(blackHoleGroup)
 
-      const ambientLight = new THREE.AmbientLight(0x14171f, 0.3)
+      const ambientLight = new THREE.AmbientLight(0x0f1326, 0.38)
       scene.add(ambientLight)
-      const rimLight = new THREE.DirectionalLight(0x4060ff, 0.6)
+      const rimLight = new THREE.DirectionalLight(0x3a5dff, 0.55)
       rimLight.position.set(-60, 90, 140)
       scene.add(rimLight)
       cleanupStack.push(() => {
@@ -107,7 +107,7 @@ function App() {
       const planetGroup = new THREE.Group()
       scene.add(planetGroup)
 
-      const accretionLight = new THREE.DirectionalLight(0x92baff, 3.5)
+      const accretionLight = new THREE.DirectionalLight(0x9caeff, 4.1)
       accretionLight.position.copy(blackHoleGroup.position.clone().add(new THREE.Vector3(0, 5, 0)))
       accretionLight.castShadow = false
       scene.add(accretionLight)
