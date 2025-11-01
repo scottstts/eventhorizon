@@ -4,6 +4,7 @@ import { loadBlackHoleResources } from './blackhole/loadResources.js'
 import { createBlackHole } from './blackhole/createBlackHole.js'
 import { createPlanetSurface } from './blackhole/createPlanetSurface.js'
 import './App.css'
+import { createAccretionFlare } from './blackhole/createAccretionFlare.js'
 
 const WORLD_UP = new THREE.Vector3(0, 1, 0)
 
@@ -93,6 +94,16 @@ function App() {
         scale: 28,
       })
       scene.add(blackHoleGroup)
+      cleanupStack.push(() => {
+        scene.remove(blackHoleGroup)
+      })
+
+      const flare = createAccretionFlare()
+      blackHoleGroup.add(flare.haloSprite)
+      blackHoleGroup.add(flare.glareSprite)
+      cleanupStack.push(() => {
+        flare.dispose()
+      })
 
       const ambientLight = new THREE.AmbientLight(0x0f1326, 0.38)
       scene.add(ambientLight)
@@ -360,6 +371,8 @@ function App() {
 
         accretionLightTarget.position.copy(planetGroup.position)
         accretionLight.position.copy(blackHoleGroup.position)
+
+        flare.update(camera, blackHoleGroup.position)
 
         await renderer.renderAsync(scene, camera)
       })
