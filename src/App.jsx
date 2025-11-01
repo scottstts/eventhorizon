@@ -114,7 +114,7 @@ function App() {
       planetMesh.receiveShadow = false
       planetGroup.add(planetMesh)
 
-      const orbitRadius = 70
+      const orbitRadius = 50
       const orbitSpeed = 0.0006
       let orbitAngle = Math.PI * 0.4
       planetGroup.position.set(
