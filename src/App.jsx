@@ -99,8 +99,8 @@ function App() {
       const planetGroup = new THREE.Group()
       scene.add(planetGroup)
 
-      const planetRadius = 20
-      const playerHeight = 2
+      const planetRadius = 2
+      const playerHeight = 0.01
       const cameraDistance = planetRadius + playerHeight
 
       const planetGeometry = new THREE.SphereGeometry(planetRadius, 128, 128)
@@ -123,7 +123,43 @@ function App() {
         Math.sin(orbitAngle) * orbitRadius
       )
 
-      playerOffset.copy(planetGroup.position).negate().setLength(cameraDistance)
+      const planetDir = planetGroup.position.clone().normalize()
+      const towardBlackHole = planetDir.clone().negate()
+      const horizonAxis = new THREE.Vector3().crossVectors(towardBlackHole, WORLD_UP)
+      if (horizonAxis.lengthSq() < 1e-6) {
+        horizonAxis.set(0, 0, 1)
+      }
+      horizonAxis.normalize()
+
+      const tempQuat = new THREE.Quaternion()
+      const tempOffset = new THREE.Vector3()
+      const tempWorld = new THREE.Vector3()
+      const tempDir = new THREE.Vector3()
+      const computeDotAt = (angle) => {
+        tempQuat.setFromAxisAngle(horizonAxis, angle)
+        tempOffset.copy(towardBlackHole).applyQuaternion(tempQuat).normalize()
+        tempWorld.copy(tempOffset).multiplyScalar(cameraDistance).add(planetGroup.position)
+        tempDir.copy(tempWorld).negate().normalize()
+        return tempDir.dot(tempOffset)
+      }
+
+      const targetDot = Math.sin(THREE.MathUtils.degToRad(45))
+      let low = 0
+      let high = Math.PI / 2
+      for (let i = 0; i < 8; i += 1) {
+        const mid = (low + high) / 2
+        const dot = computeDotAt(mid)
+        if (dot > targetDot) {
+          low = mid
+        } else {
+          high = mid
+        }
+      }
+
+      const chosenAngle = (low + high) / 2
+      tempQuat.setFromAxisAngle(horizonAxis, chosenAngle)
+      const offsetDir = towardBlackHole.clone().applyQuaternion(tempQuat).normalize()
+      playerOffset.copy(offsetDir).multiplyScalar(cameraDistance)
 
       const setInitialOrientation = () => {
         const worldPos = tempVec.copy(playerOffset).add(planetGroup.position)
@@ -210,7 +246,7 @@ function App() {
         renderer?.domElement?.removeEventListener('click', handleCanvasClick)
       })
 
-      const moveSpeed = 14
+      const moveSpeed = playerHeight * 7
 
       const updateCamera = (delta) => {
         const up = upVec.copy(playerOffset).normalize()
