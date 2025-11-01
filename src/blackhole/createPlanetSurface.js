@@ -41,7 +41,7 @@ export function createPlanetSurface({ radius = 2, segments = 128, colorTexture }
   })()
 
   material.colorNode = albedoNode
-  material.emissiveNode = albedoNode.mul(float(0.03))
+  material.emissiveNode = albedoNode.mul(float(0.01))
   material.roughnessNode = mix(float(0.45), float(0.85), horizonMask)
   material.metalnessNode = float(0.02)
   material.needsUpdate = true

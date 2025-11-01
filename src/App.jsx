@@ -94,14 +94,32 @@ function App() {
       })
       scene.add(blackHoleGroup)
 
-      const ambientLight = new THREE.AmbientLight(0x14171f, 0.35)
+      const ambientLight = new THREE.AmbientLight(0x14171f, 0.3)
       scene.add(ambientLight)
-      const rimLight = new THREE.DirectionalLight(0x4060ff, 0.7)
+      const rimLight = new THREE.DirectionalLight(0x4060ff, 0.6)
       rimLight.position.set(-60, 90, 140)
       scene.add(rimLight)
+      cleanupStack.push(() => {
+        scene.remove(ambientLight)
+        scene.remove(rimLight)
+      })
 
       const planetGroup = new THREE.Group()
       scene.add(planetGroup)
+
+      const accretionLight = new THREE.DirectionalLight(0x92baff, 3.5)
+      accretionLight.position.copy(blackHoleGroup.position.clone().add(new THREE.Vector3(0, 5, 0)))
+      accretionLight.castShadow = false
+      scene.add(accretionLight)
+
+      const accretionLightTarget = new THREE.Object3D()
+      scene.add(accretionLightTarget)
+      accretionLight.target = accretionLightTarget
+
+      cleanupStack.push(() => {
+        scene.remove(accretionLight)
+        scene.remove(accretionLightTarget)
+      })
 
       const planetRadius = 2
       const playerHeight = 0.02
@@ -127,6 +145,7 @@ function App() {
         orbitRadius * 0.05,
         Math.sin(orbitAngle) * orbitRadius
       )
+      accretionLightTarget.position.copy(planetGroup.position)
 
       const planetDir = planetGroup.position.clone().normalize()
       const towardBlackHole = planetDir.clone().negate()
@@ -338,6 +357,9 @@ function App() {
           .applyAxisAngle(planetSpinAxis, -planetSpinAngle)
           .normalize()
           .multiplyScalar(cameraDistance)
+
+        accretionLightTarget.position.copy(planetGroup.position)
+        accretionLight.position.copy(blackHoleGroup.position)
 
         await renderer.renderAsync(scene, camera)
       })
