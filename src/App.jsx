@@ -76,7 +76,7 @@ function App() {
       const camera = new THREE.PerspectiveCamera(
         70,
         Math.max(container.clientWidth, 1) / Math.max(container.clientHeight, 1),
-        0.005,
+        0.0001,
         5000
       )
 
@@ -132,10 +132,10 @@ function App() {
         scene.remove(accretionLightTarget)
       })
 
-      const planetRadius = 2
-      const playerHeight = 0.02
+      const planetRadius = 0.2
+      const playerHeight = 0.002
       const cameraDistance = planetRadius + playerHeight
-      const planetSpinSpeed = 0.01
+      const planetSpinSpeed = 0.001
 
       const {
         mesh: planetMesh,
