@@ -76,23 +76,55 @@ export function createAccretionFlare() {
 
   const cameraDir = new THREE.Vector3()
   const toBlackHoleDir = new THREE.Vector3()
+  const toPlanetDir = new THREE.Vector3()
 
-  const update = (camera, blackHolePosition) => {
+  const update = (camera, blackHolePosition, planetPosition, planetRadius = 1) => {
     cameraDir.set(0, 0, -1).applyQuaternion(camera.quaternion).normalize()
     toBlackHoleDir.copy(blackHolePosition).sub(camera.position).normalize()
     const visibility = Math.max(0, cameraDir.dot(toBlackHoleDir))
     const haloIntensity = THREE.MathUtils.smoothstep(visibility, 0.18, 0.85)
     const distance = camera.position.distanceTo(blackHolePosition)
-    const sizeBase = THREE.MathUtils.clamp(40 - distance * 0.25, 18, 45)
 
-    haloMaterial.opacity = haloIntensity * 0.8
-    glareMaterial.opacity = haloIntensity * 0.55
+    let occlusionFactor = 1
+    if (planetRadius > 0) {
+      toPlanetDir.copy(planetPosition).sub(camera.position)
+      const planetDistance = toPlanetDir.length()
+      if (planetDistance > planetRadius) {
+        toPlanetDir.normalize()
+        const angularRadius = Math.asin(
+          THREE.MathUtils.clamp(planetRadius / planetDistance, -1, 1)
+        )
+        const angleToBlackHole = Math.acos(
+          THREE.MathUtils.clamp(toPlanetDir.dot(toBlackHoleDir), -1, 1)
+        )
+        const fadeRange = THREE.MathUtils.degToRad(6)
+        const fadeStart = angularRadius
+        const fadeEnd = angularRadius + fadeRange
+        if (angleToBlackHole <= fadeStart) {
+          occlusionFactor = 0
+        } else if (angleToBlackHole < fadeEnd) {
+          occlusionFactor = THREE.MathUtils.clamp(
+            (angleToBlackHole - fadeStart) / (fadeEnd - fadeStart),
+            0,
+            1
+          )
+        }
+      } else {
+        occlusionFactor = 0
+      }
+    }
 
-    const haloScale = THREE.MathUtils.lerp(sizeBase * 0.7, sizeBase * 1.05, haloIntensity)
+    const distanceFalloff = THREE.MathUtils.clamp(40 - distance * 0.25, 18, 45)
+    const intensity = haloIntensity * occlusionFactor
+
+    haloMaterial.opacity = intensity * 0.8
+    glareMaterial.opacity = intensity * 0.55
+
+    const haloScale = THREE.MathUtils.lerp(distanceFalloff * 0.7, distanceFalloff * 1.05, intensity)
     haloSprite.scale.setScalar(haloScale)
 
-    const glareWidth = THREE.MathUtils.lerp(40, 80, haloIntensity)
-    const glareHeight = THREE.MathUtils.lerp(10, 26, haloIntensity)
+    const glareWidth = THREE.MathUtils.lerp(40, 80, intensity)
+    const glareHeight = THREE.MathUtils.lerp(10, 26, intensity)
     glareSprite.scale.set(glareWidth, glareHeight, 1)
   }
 

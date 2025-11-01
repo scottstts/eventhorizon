@@ -428,7 +428,7 @@ function App() {
         accretionLightTarget.position.copy(planetGroup.position)
         accretionLight.position.copy(blackHoleGroup.position)
 
-        flare.update(camera, blackHoleGroup.position)
+        flare.update(camera, blackHoleGroup.position, planetGroup.position, planetRadius)
 
         await renderer.renderAsync(scene, camera)
       })
