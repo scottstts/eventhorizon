@@ -78,7 +78,7 @@ function App() {
 
       const clock = new THREE.Clock()
 
-      const { noiseTexture, starsTexture } = await loadBlackHoleResources()
+      const { noiseTexture, starsTexture, planetTexture } = await loadBlackHoleResources()
       if (disposed) return
 
       scene.background = starsTexture
@@ -101,8 +101,9 @@ function App() {
       scene.add(planetGroup)
 
       const planetRadius = 2
-      const playerHeight = 0.2
+      const playerHeight = 0.02
       const cameraDistance = planetRadius + playerHeight
+      const planetSpinSpeed = 0.01
 
       const {
         mesh: planetMesh,
@@ -111,10 +112,11 @@ function App() {
       } = createPlanetSurface({
         radius: planetRadius,
         segments: 160,
+        colorTexture: planetTexture,
       })
       planetGroup.add(planetMesh)
 
-      const orbitRadius = 50
+      const orbitRadius = 30
       const orbitSpeed = 0.0006
       let orbitAngle = Math.PI * 0.4
       planetGroup.position.set(
@@ -302,6 +304,7 @@ function App() {
         blackHoleMaterial.dispose()
         noiseTexture.dispose()
         starsTexture.dispose()
+        planetTexture.dispose()
         blackHoleGroup.traverse((child) => {
           if (child.isMesh) {
             child.geometry?.dispose?.()
@@ -318,7 +321,12 @@ function App() {
           orbitRadius * 0.05,
           Math.sin(orbitAngle) * orbitRadius
         )
-        planetMesh.rotation.y += delta * 0.05
+        const spinDelta = delta * planetSpinSpeed
+        if (spinDelta !== 0) {
+          tempQuat.setFromAxisAngle(WORLD_UP, spinDelta)
+          playerOffset.applyQuaternion(tempQuat)
+          planetMesh.rotation.y += spinDelta
+        }
 
         updateCamera(delta)
 
