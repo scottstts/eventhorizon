@@ -29,6 +29,7 @@ function App() {
       backward: false,
       left: false,
       right: false,
+      shift: false,
     }
 
     let yaw = 0
@@ -40,6 +41,8 @@ function App() {
     const playerOffsetLocal = new THREE.Vector3()
     const tempVec = new THREE.Vector3()
     const tempVec2 = new THREE.Vector3()
+    const cameraBobOffset = new THREE.Vector3()
+    let cameraBobStrength = 0
     const upVec = new THREE.Vector3()
     const forwardVec = new THREE.Vector3()
     const rightVec = new THREE.Vector3()
@@ -145,6 +148,7 @@ function App() {
       const playerHeight = 0.002
       const cameraDistance = planetRadius + playerHeight
       const planetSpinSpeed = 0.001
+      const baseMoveSpeed = playerHeight * 2
 
       const {
         mesh: planetMesh,
@@ -233,6 +237,10 @@ function App() {
           case 'KeyD':
             moveState.right = true
             break
+          case 'ShiftLeft':
+          case 'ShiftRight':
+            moveState.shift = true
+            break
           default:
             break
         }
@@ -252,6 +260,10 @@ function App() {
           case 'KeyD':
             moveState.right = false
             break
+          case 'ShiftLeft':
+          case 'ShiftRight':
+            moveState.shift = false
+            break
           default:
             break
         }
@@ -270,6 +282,7 @@ function App() {
           moveState.backward = false
           moveState.left = false
           moveState.right = false
+          moveState.shift = false
         }
       }
 
@@ -311,9 +324,7 @@ function App() {
         musicStarted = false
       })
 
-      const moveSpeed = playerHeight * 2
-
-      const updateCamera = (delta) => {
+      const updateCamera = (delta, elapsedTime) => {
         const up = upVec.copy(playerOffset).normalize()
         baseQuat.setFromUnitVectors(WORLD_UP, up)
         lookQuat.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'))
@@ -333,7 +344,11 @@ function App() {
         if (moveState.right) tempVec.add(rightVec)
         if (moveState.left) tempVec.sub(rightVec)
 
-        if (tempVec.lengthSq() > 0) {
+        const isMoving = tempVec.lengthSq() > 0
+        const runMultiplier = moveState.shift ? 2 : 1
+        const moveSpeed = baseMoveSpeed * runMultiplier
+
+        if (isMoving) {
           tempVec.normalize().multiplyScalar(moveSpeed * delta)
           playerOffset.add(tempVec)
           playerOffset.normalize().multiplyScalar(cameraDistance)
@@ -341,6 +356,17 @@ function App() {
 
         const worldPos = tempVec.copy(playerOffset).add(planetGroup.position)
         camera.position.copy(worldPos)
+
+        const targetBobStrength = isMoving ? (moveState.shift ? 1 : 0.7) : 0
+        const lerpFactor = 1 - Math.exp(-delta * 6)
+        cameraBobStrength += (targetBobStrength - cameraBobStrength) * lerpFactor
+        const bobAmplitude = playerHeight * 0.3
+        const bobX = Math.sin(elapsedTime * 1.7) * bobAmplitude
+        const bobY = Math.sin(elapsedTime * 3.1) * bobAmplitude * 0.6
+        const bobZ = Math.cos(elapsedTime * 1.2) * bobAmplitude * 0.8
+        cameraBobOffset.set(bobX, bobY, bobZ).multiplyScalar(cameraBobStrength)
+        camera.position.add(cameraBobOffset)
+
         if (!initialLookAligned) {
           camera.lookAt(blackHoleGroup.position)
           camera.updateMatrixWorld()
@@ -377,6 +403,7 @@ function App() {
 
       renderer.setAnimationLoop(async () => {
         const delta = clock.getDelta()
+        const elapsedTime = clock.elapsedTime
 
         orbitAngle += orbitSpeed * delta
         planetGroup.position.set(
@@ -390,7 +417,7 @@ function App() {
 
         playerOffset.copy(playerOffsetLocal).applyAxisAngle(planetSpinAxis, planetSpinAngle)
 
-        updateCamera(delta)
+        updateCamera(delta, elapsedTime)
 
         playerOffsetLocal
           .copy(playerOffset)
