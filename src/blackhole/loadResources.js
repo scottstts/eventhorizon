@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu'
 
 const noiseTextureUrl = new URL('../assets/textures/noise_deep.png', import.meta.url)
-const starsTextureUrl = new URL('../assets/textures/hdr/nebula.png', import.meta.url)
+const starsTextureUrl = new URL('../assets/textures/hdr/nebula.jpeg', import.meta.url)
 const planetTextureUrl = new URL('../assets/textures/planet_texture.jpg', import.meta.url)
 
 export async function loadBlackHoleResources() {
