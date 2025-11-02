@@ -13,6 +13,30 @@ function App() {
   const containerRef = useRef(null)
 
   useEffect(() => {
+    // Gate experience to desktop Chromium browsers before initializing the 3D scene.
+    const nav = typeof navigator !== 'undefined' ? navigator : null
+    if (!nav) return
+
+    const uaData = nav.userAgentData
+    const ua = nav.userAgent || ''
+    const isMobileDevice =
+      Boolean(uaData?.mobile) ||
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Windows Phone|Opera Mini|Mobi/i.test(ua)
+
+    const chromiumBrandRegex = /(Chromium|Google Chrome|Microsoft Edge|Opera|Brave|Vivaldi)/i
+    const brandIndicatesChromium = Array.isArray(uaData?.brands)
+      ? uaData.brands.some((brand) => chromiumBrandRegex.test(brand.brand))
+      : false
+    const isChromiumBrowser =
+      brandIndicatesChromium ||
+      (/Chrome|Chromium|Edg|OPR|Brave|Vivaldi/i.test(ua) &&
+        !/SamsungBrowser|UCBrowser|Silk|QQBrowser/i.test(ua))
+
+    if (isMobileDevice || !isChromiumBrowser) {
+      window.alert('This experience is only available on desktop Chromium browsers.')
+      return
+    }
+
     const container = containerRef.current
     if (!container) return
 
